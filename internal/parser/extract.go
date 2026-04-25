@@ -60,6 +60,11 @@ func ExtractSessionMeta(messages []*Message, projectPath string, filename string
 			branchSet[msg.GitBranch] = true
 		}
 
+		// Capture entrypoint from first message that has it
+		if meta.Entrypoint == "" && msg.Entrypoint != "" {
+			meta.Entrypoint = msg.Entrypoint
+		}
+
 		switch msg.Type {
 		case "summary":
 			if msg.Summary != "" {
@@ -72,6 +77,18 @@ func ExtractSessionMeta(messages []*Message, projectPath string, filename string
 				if firstUserContent == "" {
 					firstUserContent = msg.UserContent()
 				}
+			}
+
+		case "pr-link":
+			if msg.PRUrl != "" {
+				meta.PRLinks = append(meta.PRLinks, msg.PRUrl)
+				meta.LinkedPRCount++
+			}
+
+		case "system":
+			if msg.Subtype == "turn_duration" && msg.DurationMs > 0 {
+				meta.TurnCount++
+				meta.TotalTurnMs += msg.DurationMs
 			}
 
 		case "assistant":

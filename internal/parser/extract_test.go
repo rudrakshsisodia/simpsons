@@ -92,3 +92,71 @@ func TestExtractSessionMeta_EmptyMessages(t *testing.T) {
 		t.Errorf("expected empty slug, got %q", meta.Slug)
 	}
 }
+
+func TestExtractSessionMeta_Entrypoint(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "session_ep.jsonl")
+
+	content := `{"type":"user","uuid":"u1","timestamp":"2026-03-03T10:00:00.000Z","sessionId":"s1","slug":"test","entrypoint":"claude-vscode","isSidechain":false,"message":{"role":"user","content":"hi"}}` + "\n"
+	if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	messages, err := ReadSessionFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	meta := ExtractSessionMeta(messages, "-test", "s1.jsonl")
+	if meta.Entrypoint != "claude-vscode" {
+		t.Errorf("expected entrypoint 'claude-vscode', got %q", meta.Entrypoint)
+	}
+}
+
+func TestExtractSessionMeta_PRLink(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "session_pr.jsonl")
+
+	content := `{"type":"user","uuid":"u1","timestamp":"2026-03-03T10:00:00.000Z","sessionId":"s1","slug":"test","isSidechain":false,"message":{"role":"user","content":"hi"}}` + "\n" +
+		`{"type":"pr-link","uuid":"pr1","timestamp":"2026-03-03T10:01:00.000Z","prNumber":123,"prUrl":"https://github.com/foo/bar/pull/123","prRepository":"foo/bar"}` + "\n"
+	if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	messages, err := ReadSessionFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	meta := ExtractSessionMeta(messages, "-test", "s1.jsonl")
+	if meta.LinkedPRCount != 1 {
+		t.Errorf("expected LinkedPRCount=1, got %d", meta.LinkedPRCount)
+	}
+	if len(meta.PRLinks) != 1 || meta.PRLinks[0] != "https://github.com/foo/bar/pull/123" {
+		t.Errorf("expected PRLinks to contain URL, got %v", meta.PRLinks)
+	}
+}
+
+func TestExtractSessionMeta_TurnDuration(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "session_td.jsonl")
+
+	content := `{"type":"user","uuid":"u1","timestamp":"2026-03-03T10:00:00.000Z","sessionId":"s1","slug":"test","isSidechain":false,"message":{"role":"user","content":"hi"}}` + "\n" +
+		`{"type":"system","subtype":"turn_duration","durationMs":5000,"uuid":"sys1","timestamp":"2026-03-03T10:01:00.000Z"}` + "\n"
+	if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	messages, err := ReadSessionFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	meta := ExtractSessionMeta(messages, "-test", "s1.jsonl")
+	if meta.TurnCount != 1 {
+		t.Errorf("expected TurnCount=1, got %d", meta.TurnCount)
+	}
+	if meta.TotalTurnMs != 5000 {
+		t.Errorf("expected TotalTurnMs=5000, got %d", meta.TotalTurnMs)
+	}
+}

@@ -7,9 +7,6 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-// Bar colors — cyan-focused gradient.
-var barColors = []string{"#FF8C00", "#FF8C00", "#FED90F", "#FFB347", "#FFD700"}
-
 // BarItem represents a single bar in a bar chart.
 type BarItem struct {
 	Label string
@@ -45,7 +42,7 @@ func BarChart(items []BarItem, maxWidth int) string {
 	countStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#9CA3AF")).Faint(true)
 
 	var lines []string
-	for i, item := range items {
+	for _, item := range items {
 		// Use half-block resolution: each character position = 2 units
 		var units int
 		if maxVal > 0 {
@@ -57,7 +54,22 @@ func BarChart(items []BarItem, maxWidth int) string {
 		fullBlocks := units / 2
 		halfBlock := units % 2
 
-		color := barColors[i%len(barColors)]
+		// Color based on value relative to maxVal
+		var color string
+		ratio := 0.0
+		if maxVal > 0 {
+			ratio = float64(item.Value) / float64(maxVal)
+		}
+		switch {
+		case ratio >= 0.75:
+			color = "#FED90F"
+		case ratio >= 0.50:
+			color = "#FF8C00"
+		case ratio >= 0.25:
+			color = "#F59E0B"
+		default:
+			color = "#B85C00"
+		}
 		barStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(color))
 
 		barStr := strings.Repeat("█", fullBlocks)

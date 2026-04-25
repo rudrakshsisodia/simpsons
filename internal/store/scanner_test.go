@@ -112,6 +112,43 @@ func TestScanner_NonexistentDir(t *testing.T) {
 	}
 }
 
+func TestScannerCountsSubagents(t *testing.T) {
+	// Create a temp dir structure:
+	// baseDir/
+	//   -test-project/
+	//     session1.jsonl  (minimal valid JSONL)
+	//     session1/
+	//       subagents/
+	//         agent1.jsonl
+	//         agent2.jsonl
+	dir := t.TempDir()
+	projDir := filepath.Join(dir, "-test-project")
+	os.MkdirAll(projDir, 0755)
+
+	// Write minimal session JSONL
+	sessionJSON := `{"type":"user","uuid":"msg1","timestamp":"2026-01-01T10:00:00Z","message":{"role":"user","content":"hi"}}` + "\n"
+	os.WriteFile(filepath.Join(projDir, "session1.jsonl"), []byte(sessionJSON), 0644)
+
+	// Create subagent dir with 2 subagent files
+	subDir := filepath.Join(projDir, "session1", "subagents")
+	os.MkdirAll(subDir, 0755)
+	os.WriteFile(filepath.Join(subDir, "agent1.jsonl"), []byte(sessionJSON), 0644)
+	os.WriteFile(filepath.Join(subDir, "agent2.jsonl"), []byte(sessionJSON), 0644)
+
+	s := New()
+	msgCh := make(chan ScanMsg, 100)
+	scanner := NewScanner(s, dir)
+	scanner.Run(msgCh)
+
+	sessions := s.AllSessions()
+	if len(sessions) != 1 {
+		t.Fatalf("expected 1 session, got %d", len(sessions))
+	}
+	if sessions[0].SubagentCount != 2 {
+		t.Errorf("expected SubagentCount=2, got %d", sessions[0].SubagentCount)
+	}
+}
+
 func TestScanner_Timeout(t *testing.T) {
 	baseDir := t.TempDir()
 	s := New()

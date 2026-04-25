@@ -2,6 +2,7 @@ package store
 
 import (
 	"sync"
+	"time"
 
 	"github.com/rudrakshsisodia/simpsons/internal/model"
 )
@@ -18,14 +19,18 @@ type Store struct {
 	scanTotal   int
 
 	history *model.HistoryStats
+
+	cachedAnalytics *model.Analytics
+	analyticsDirty  bool
 }
 
 // New creates a new empty Store.
 func New() *Store {
 	return &Store{
-		sessions:  make(map[string]*model.SessionMeta),
-		byProject: make(map[string][]string),
-		details:   make(map[string]*model.SessionDetail),
+		sessions:       make(map[string]*model.SessionMeta),
+		byProject:      make(map[string][]string),
+		details:        make(map[string]*model.SessionDetail),
+		analyticsDirty: true,
 	}
 }
 
@@ -35,7 +40,18 @@ func (s *Store) Add(meta *model.SessionMeta) {
 	defer s.mu.Unlock()
 
 	s.sessions[meta.UUID] = meta
-	s.byProject[meta.ProjectPath] = append(s.byProject[meta.ProjectPath], meta.UUID)
+	// Only append if not already in byProject
+	found := false
+	for _, id := range s.byProject[meta.ProjectPath] {
+		if id == meta.UUID {
+			found = true
+			break
+		}
+	}
+	if !found {
+		s.byProject[meta.ProjectPath] = append(s.byProject[meta.ProjectPath], meta.UUID)
+	}
+	s.analyticsDirty = true
 }
 
 // Get returns a session by UUID, or nil if not found.
@@ -86,8 +102,12 @@ func (s *Store) SessionsByProject(project string) []*model.SessionMeta {
 
 // Analytics computes aggregate analytics from all sessions.
 func (s *Store) Analytics() *model.Analytics {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if !s.analyticsDirty && s.cachedAnalytics != nil {
+		return s.cachedAnalytics
+	}
 
 	a := &model.Analytics{
 		ModelsUsed:     make(map[string]int),
@@ -132,7 +152,16 @@ func (s *Store) Analytics() *model.Analytics {
 	}
 
 	a.ActiveProjects = len(projectSet)
+	s.cachedAnalytics = a
+	s.analyticsDirty = false
 	return a
+}
+
+// TodaySpend returns the total estimated cost for sessions started today (cached).
+func (s *Store) TodaySpend() float64 {
+	today := time.Now().Format("2006-01-02")
+	a := s.Analytics()
+	return a.CostByDate[today]
 }
 
 // GetDetail returns a cached session detail by UUID, or nil if not cached.

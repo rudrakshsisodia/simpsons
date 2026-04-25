@@ -181,6 +181,12 @@ func renderSummaryHeader(analytics *model.Analytics, earliest time.Time, s analy
 	if sinceStr != "" {
 		fmt.Fprintf(&b, "    %s %s", s.label.Render("Since:"), s.value.Render(sinceStr))
 	}
+	hitRate := analytics.CacheHitRate()
+	if hitRate > 0 {
+		fmt.Fprintf(&b, "    %s %s",
+			s.label.Render("Cache Hit:"),
+			s.value.Render(fmt.Sprintf("%.1f%%", hitRate*100)))
+	}
 	b.WriteString("\n")
 
 	return b.String()
@@ -214,7 +220,7 @@ func renderLeftColumn(insights model.Insights, analytics *model.Analytics, s ana
 		if slug == "" {
 			slug = insights.LongestSession.UUID[:8]
 		}
-		project := "/" + strings.ReplaceAll(strings.TrimPrefix(insights.LongestSession.ProjectPath, "-"), "-", "/")
+		project := decodePath(insights.LongestSession.ProjectPath)
 		fmt.Fprintf(&b, "  %s %s (%s · %s)\n",
 			s.label.Render("Longest Session:"),
 			s.value.Render(formatDuration(insights.LongestSession.Duration)),
@@ -255,10 +261,19 @@ func renderLeftColumn(insights model.Insights, analytics *model.Analytics, s ana
 	totalWork := analytics.WorkModeExplore + analytics.WorkModeBuild + analytics.WorkModeTest
 	if totalWork > 0 {
 		b.WriteString("  " + s.subtitle.Render("Work Mode") + "\n")
-		fmt.Fprintf(&b, "  Exploration %d%%    Building %d%%    Testing %d%%\n",
-			analytics.WorkModeExplore*100/totalWork,
-			analytics.WorkModeBuild*100/totalWork,
-			analytics.WorkModeTest*100/totalWork,
+		barWidth := 20
+		exploreBar := int(float64(analytics.WorkModeExplore) / float64(totalWork) * float64(barWidth))
+		buildBar := int(float64(analytics.WorkModeBuild) / float64(totalWork) * float64(barWidth))
+		testBar := int(float64(analytics.WorkModeTest) / float64(totalWork) * float64(barWidth))
+
+		exploreStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#FF8C00"))
+		buildStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#FED90F"))
+		testStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#F59E0B"))
+
+		fmt.Fprintf(&b, "  %s %s %d%%   %s %s %d%%   %s %s %d%%\n",
+			s.label.Render("Explore"), exploreStyle.Render(strings.Repeat("█", exploreBar)), analytics.WorkModeExplore*100/totalWork,
+			s.label.Render("Build"), buildStyle.Render(strings.Repeat("█", buildBar)), analytics.WorkModeBuild*100/totalWork,
+			s.label.Render("Test"), testStyle.Render(strings.Repeat("█", testBar)), analytics.WorkModeTest*100/totalWork,
 		)
 		hr()
 	}
@@ -348,7 +363,7 @@ func renderRightColumnContent(analytics *model.Analytics, activityByDate map[str
 		if graphWidth < 30 {
 			graphWidth = 30
 		}
-		graph := components.BarGraph(costData, graphWidth, 4)
+		graph := components.BarGraphColored(costData, graphWidth, 4, "#10B981")
 		for _, line := range strings.Split(graph, "\n") {
 			b.WriteString("  " + line + "\n")
 		}

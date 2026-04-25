@@ -19,13 +19,20 @@ type Message struct {
 	IsSidechain bool   `json:"isSidechain"`
 	IsMeta      bool   `json:"isMeta"`
 	AgentID     string `json:"agentId"`
+	Entrypoint  string `json:"entrypoint"`
 
 	// type=summary
 	Summary  string `json:"summary"`
 	LeafUUID string `json:"leafUuid"`
 
 	// type=system
-	Subtype string `json:"subtype"`
+	Subtype    string `json:"subtype"`
+	DurationMs int64  `json:"durationMs"`
+
+	// type=pr-link
+	PRNumber     int    `json:"prNumber"`
+	PRUrl        string `json:"prUrl"`
+	PRRepository string `json:"prRepository"`
 
 	// Raw nested message (for user and assistant types)
 	RawMessage json.RawMessage `json:"message"`

@@ -56,7 +56,7 @@ func (f *Filter) View() string {
 	if !f.Active {
 		return ""
 	}
-	return "/ " + f.Query
+	return "/ " + f.Query + "▎"
 }
 
 // Matches returns true if text contains the query (case-insensitive substring match).

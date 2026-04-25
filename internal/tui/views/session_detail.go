@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/rudrakshsisodia/simpsons/internal/model"
 	"github.com/rudrakshsisodia/simpsons/internal/store"
 )
@@ -69,12 +70,14 @@ func (v *SessionDetailView) View(width, height int) string {
 	b.WriteString("\n")
 
 	// Sub-tab bar
+	activeStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#FF8C00")).Bold(true).Underline(true)
+	inactiveStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#6B7280"))
 	b.WriteString("  ")
 	for i, name := range detailTabNames {
 		if i == v.activeTab {
-			b.WriteString("[" + name + "]")
+			b.WriteString(activeStyle.Render(name))
 		} else {
-			b.WriteString(" " + name + " ")
+			b.WriteString(inactiveStyle.Render(name))
 		}
 		if i < len(detailTabNames)-1 {
 			b.WriteString("  ")
@@ -143,6 +146,16 @@ func (v *SessionDetailView) renderOverview(width int) string {
 	b.WriteString(fmt.Sprintf("  %-15s %d\n", "Messages:", m.MessageCount))
 	b.WriteString(fmt.Sprintf("  %-15s %d\n", "Tools:", totalTools))
 	b.WriteString(fmt.Sprintf("  %-15s %d\n", "Subagents:", m.SubagentCount))
+	if m.Entrypoint != "" {
+		b.WriteString(fmt.Sprintf("  %-15s %s\n", "Source:", m.Entrypoint))
+	}
+	if m.LinkedPRCount > 0 {
+		b.WriteString(fmt.Sprintf("  %-15s %d\n", "PRs Linked:", m.LinkedPRCount))
+	}
+	if m.TurnCount > 0 {
+		avgMs := float64(m.TotalTurnMs) / float64(m.TurnCount)
+		b.WriteString(fmt.Sprintf("  %-15s %.1fs\n", "Avg Turn:", avgMs/1000.0))
+	}
 	b.WriteString("\n")
 
 	// Initial prompt

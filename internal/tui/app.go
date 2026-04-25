@@ -327,6 +327,16 @@ func (a App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					return a, nil
 				}
 				return a, nil
+			case "h":
+				if !a.projectsView.FilterActive() && !a.sessionsView.FilterActive() {
+					a.activeTab = (a.activeTab - 1 + len(tabNames)) % len(tabNames)
+				}
+				return a, nil
+			case "l":
+				if !a.projectsView.FilterActive() && !a.sessionsView.FilterActive() {
+					a.activeTab = (a.activeTab + 1) % len(tabNames)
+				}
+				return a, nil
 			case "j", "k", "g", "G":
 				switch a.activeTab {
 				case 0:
@@ -337,6 +347,11 @@ func (a App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					a.sessionsView.Update(msg)
 				case 4:
 					a.toolsView.Update(msg)
+				}
+				return a, nil
+			case "c":
+				if a.activeTab == 2 && !a.sessionsView.FilterActive() {
+					a.sessionsView.Update(msg)
 				}
 				return a, nil
 			default:
@@ -465,42 +480,48 @@ func (a App) View() string {
 }
 
 func (a App) renderHelpOverlay() string {
-	help := `  🍩 simpsons — Claude Code Session Analyzer
+	help := `Navigation
+  1-5 / Tab / Shift+Tab   Switch view
+  h / l                   Previous / next view
+  Enter                   Open selected item
+  Esc                     Go back
 
-  Navigation
-    1-5            Switch view
-    Tab/Shift+Tab  Next/prev view
-    Enter          Open selected item
-    Esc            Go back
+Lists
+  ↑ / ↓  j / k           Navigate rows
+  /                       Search / filter
+  c                       Toggle cost sort (Sessions)
 
-  Lists
-    ↑/↓ j/k       Navigate rows
-    /              Search/filter
+Session Detail
+  ← / → h / l            Switch sub-tab
+  ↑ / ↓  j / k           Scroll content
 
-  Session Detail
-    ←/→ h/l       Switch sub-tab
-    ↑/↓ j/k       Scroll content
+Clipboard
+  y                       Copy "claude --resume" command
 
-  Clipboard
-    y              Copy "claude --resume" command
+Export / Import
+  e                       Export selected session
+  E                       Export all visible sessions
+  i                       Import session(s) from zip
 
-  Export / Import
-    e              Export selected session
-    E              Export all visible sessions
-    i              Import session(s) from zip
+General
+  ?                       Toggle this help
+  q                       Quit`
 
-  General
-    ?              Toggle this help
-    q              Quit
+	titleStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#FF8C00")).Bold(true)
+	boxStyle := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(lipgloss.Color("#FF8C00")).
+		Padding(1, 3).
+		Width(60)
 
-  Press any key to dismiss`
+	content := titleStyle.Render("simpsons  Keyboard Shortcuts") + "\n\n" + help
+	box := boxStyle.Render(content)
 
-	style := lipgloss.NewStyle().
+	outer := lipgloss.NewStyle().
 		Width(a.width).
 		Height(a.height).
-		Padding(2, 4)
-
-	return style.Render(help)
+		Align(lipgloss.Center, lipgloss.Center)
+	return outer.Render(box)
 }
 
 func (a App) renderTabBar() string {
@@ -681,17 +702,14 @@ func (a App) renderContent() string {
 
 // todaySpend returns the total estimated cost for sessions started today.
 func (a App) todaySpend() float64 {
-	today := time.Now().Format("2006-01-02")
-	var total float64
-	for _, s := range a.store.AllSessions() {
-		if s.StartTime.Format("2006-01-02") == today {
-			total += s.CostUSD
-		}
-	}
-	return total
+	return a.store.TodaySpend()
 }
 
 func (a App) renderStatusBar() string {
+	accentStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#F59E0B")).Bold(true)
+	brandStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#FF8C00")).Bold(true)
+	brand := brandStyle.Render("◈ simpsons")
+
 	var status string
 	if a.notification != "" {
 		status = a.notification
@@ -699,7 +717,7 @@ func (a App) renderStatusBar() string {
 		spend := a.todaySpend()
 		spendStr := ""
 		if spend > 0 {
-			spendStr = fmt.Sprintf("  Today: %s", model.FormatCost(spend))
+			spendStr = fmt.Sprintf("  Today: %s", accentStyle.Render(model.FormatCost(spend)))
 		}
 		if a.historyCount > 0 {
 			status = fmt.Sprintf("Ready — %d sessions, %d prompts indexed%s", a.scanScanned, a.historyCount, spendStr)
@@ -716,12 +734,12 @@ func (a App) renderStatusBar() string {
 	if a.activeTab == 2 || (a.showingDetail && a.detailView != nil) {
 		help = "e export  i import  y copy  ? help  q quit"
 	}
-	gap := a.width - len(status) - len(help) - 4
+	gap := a.width - len(brand) - len(status) - len(help) - 6
 	if gap < 0 {
 		gap = 1
 	}
 	return a.styles.StatusBar.Width(a.width).Render(
-		"  " + status + strings.Repeat(" ", gap) + help,
+		"  " + brand + "  " + status + strings.Repeat(" ", gap) + help,
 	)
 }
 

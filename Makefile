@@ -1,6 +1,6 @@
 .PHONY: build test lint fmt run clean doc tidy
 
-BINARY := cicada
+BINARY := simpsons
 
 build:
 	go build -o $(BINARY) .

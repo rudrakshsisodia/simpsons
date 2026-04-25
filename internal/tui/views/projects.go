@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/rudrakshsisodia/simpsons/internal/model"
 	"github.com/rudrakshsisodia/simpsons/internal/store"
 	"github.com/rudrakshsisodia/simpsons/internal/tui/components"
@@ -107,7 +108,7 @@ func (v *ProjectsView) View(width, height int) string {
 
 	rows := make([]ProjectRow, 0, len(projects))
 	for _, p := range projects {
-		decoded := "/" + strings.ReplaceAll(strings.TrimPrefix(p, "-"), "-", "/")
+		decoded := decodePath(p)
 
 		// Apply filter on decoded project name
 		if v.filter.Query != "" && !v.filter.Matches(decoded) {
@@ -159,6 +160,8 @@ func (v *ProjectsView) View(width, height int) string {
 	b.WriteString(header + "\n")
 	b.WriteString("  " + strings.Repeat("\u2500", 94) + "\n")
 
+	selectedStyle := lipgloss.NewStyle().Background(lipgloss.Color("#2D3748")).Foreground(lipgloss.Color("#FF8C00")).Bold(true)
+
 	// Calculate scrolling window
 	maxRows := height - 5 // header + separator + padding
 	if maxRows < 1 {
@@ -194,7 +197,11 @@ func (v *ProjectsView) View(width, height int) string {
 			prefix = "> "
 		}
 		line := fmt.Sprintf("%s%-50s %10d %10s %20s", prefix, name, row.SessionCount, model.FormatCost(row.CostUSD), row.LastActive)
-		b.WriteString(line + "\n")
+		if i == v.selected {
+			b.WriteString(selectedStyle.Render(line) + "\n")
+		} else {
+			b.WriteString(line + "\n")
+		}
 	}
 
 	return b.String()

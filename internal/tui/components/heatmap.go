@@ -9,7 +9,7 @@ import (
 
 var (
 	// Monochrome intensity — dark to bright white.
-	heatShades = []string{"", "#333333", "#666666", "#999999", "#FFFFFF"}
+	heatShades = []string{"", "#7C3B00", "#B85C00", "#FF8C00", "#FED90F"}
 	dayLabels  = []string{"Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"}
 )
 
@@ -27,7 +27,7 @@ func Heatmap(data [7][24]int) string {
 
 	dimStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#6B7280"))
 	labelStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#9CA3AF"))
-	emptyStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#1A1A1A"))
+	emptyStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#3D2B00"))
 
 	var b strings.Builder
 
@@ -46,7 +46,7 @@ func Heatmap(data [7][24]int) string {
 		for hour := range 24 {
 			val := data[day][hour]
 			if val == 0 {
-				b.WriteString(emptyStyle.Render("··"))
+				b.WriteString(emptyStyle.Render("░░"))
 			} else {
 				b.WriteString(monoBlock(val, maxVal))
 			}

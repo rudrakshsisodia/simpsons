@@ -52,14 +52,14 @@ type Styles struct {
 func NewStyles(t Theme) Styles {
 	return Styles{
 		TabBar:      lipgloss.NewStyle().Background(lipgloss.Color(t.BgDark)).Padding(0, 1),
-		TabActive:   lipgloss.NewStyle().Foreground(lipgloss.Color(t.Primary)).Bold(true).Padding(0, 2),
+		TabActive:   lipgloss.NewStyle().Background(lipgloss.Color(t.Primary)).Foreground(lipgloss.Color(t.BgDark)).Bold(true).Padding(0, 2),
 		TabInactive: lipgloss.NewStyle().Foreground(lipgloss.Color(t.FgDim)).Padding(0, 2),
 		StatusBar:   lipgloss.NewStyle().Background(lipgloss.Color(t.BgDark)).Foreground(lipgloss.Color(t.FgDim)).Padding(0, 1),
 		Title:       lipgloss.NewStyle().Foreground(lipgloss.Color(t.Primary)).Bold(true),
 		Subtitle:    lipgloss.NewStyle().Foreground(lipgloss.Color(t.Secondary)),
 		StatLabel:   lipgloss.NewStyle().Foreground(lipgloss.Color(t.FgDim)),
 		StatValue:   lipgloss.NewStyle().Foreground(lipgloss.Color(t.Fg)).Bold(true),
-		Selected:    lipgloss.NewStyle().Background(lipgloss.Color(t.BgLight)).Foreground(lipgloss.Color(t.Fg)),
+		Selected:    lipgloss.NewStyle().Background(lipgloss.Color("#2D3748")).Foreground(lipgloss.Color(t.Primary)).Bold(true),
 		ViewPort:    lipgloss.NewStyle().Padding(1, 2),
 	}
 }

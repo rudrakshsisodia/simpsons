@@ -89,6 +89,13 @@ func (sc *Scanner) Run(msgCh chan<- ScanMsg) {
 		}
 
 		meta := parser.ExtractSessionMeta(messages, f.project, filepath.Base(f.path))
+
+		// Count subagents: look for <sessionUUID>/subagents/*.jsonl
+		sessionUUID := strings.TrimSuffix(filepath.Base(f.path), ".jsonl")
+		subagentDir := filepath.Join(sc.baseDir, f.project, sessionUUID, "subagents")
+		subagentFiles, _ := filepath.Glob(filepath.Join(subagentDir, "*.jsonl"))
+		meta.SubagentCount = len(subagentFiles)
+
 		sc.store.Add(meta)
 		scanned++
 		sc.store.SetScanProgress(scanned, total)

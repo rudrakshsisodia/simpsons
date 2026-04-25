@@ -50,7 +50,7 @@ func ComputeInsights(sessions []*SessionMeta, history *HistoryStats) Insights {
 	hourCounts := make(map[int]int) // hour -> session count
 
 	now := time.Now().Truncate(24 * time.Hour)
-	weekStart := now.AddDate(0, 0, -int(now.Weekday())) // Sunday
+	weekStart := now.AddDate(0, 0, -6)    // rolling 7-day window
 	lastWeekStart := weekStart.AddDate(0, 0, -7)
 
 	var totalDuration time.Duration

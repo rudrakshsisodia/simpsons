@@ -25,6 +25,11 @@ type SessionMeta struct {
 	FileOps       map[string]int // operation type → count
 	MessageCount  int
 	CostUSD       float64 // estimated cost in USD
+	Entrypoint    string  // "cli", "claude-vscode", "sdk-cli", etc.
+	LinkedPRCount int
+	PRLinks       []string
+	TurnCount     int
+	TotalTurnMs   int64
 }
 
 // SessionDetail holds full session data, loaded lazily on navigation.

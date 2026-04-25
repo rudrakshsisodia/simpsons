@@ -134,8 +134,8 @@ func TestFilter_View_Active(t *testing.T) {
 	if view == "" {
 		t.Error("expected non-empty view when active")
 	}
-	if view != "/ test" {
-		t.Errorf("expected '/ test', got %q", view)
+	if view != "/ test▎" {
+		t.Errorf("expected '/ test▎', got %q", view)
 	}
 }
 

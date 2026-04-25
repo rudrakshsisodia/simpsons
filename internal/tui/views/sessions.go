@@ -7,6 +7,7 @@ import (
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/rudrakshsisodia/simpsons/internal/model"
 	"github.com/rudrakshsisodia/simpsons/internal/store"
 	"github.com/rudrakshsisodia/simpsons/internal/tui/components"
@@ -36,7 +37,7 @@ func (v *SessionsView) refreshRows() {
 	} else {
 		v.rows = make([]*model.SessionMeta, 0)
 		for _, s := range all {
-			project := "/" + strings.ReplaceAll(strings.TrimPrefix(s.ProjectPath, "-"), "-", "/")
+			project := decodePath(s.ProjectPath)
 			if v.filter.Matches(s.Slug) || v.filter.Matches(s.InitialPrompt) || v.filter.Matches(project) {
 				v.rows = append(v.rows, s)
 			}
@@ -149,13 +150,17 @@ func (v *SessionsView) View(width, height int) string {
 
 	// Header
 	sortLabel := "c:sort by cost"
+	costHeader := "Cost"
 	if v.sortByCost {
 		sortLabel = "c:sort by date  [sorted by cost]"
+		costHeader = "Cost ↓"
 	}
 	header := fmt.Sprintf("  %-20s %-30s %-12s %10s %10s %8s %6s   %s",
-		"Slug", "Project", "Date", "Duration", "Tokens", "Cost", "Tools", sortLabel)
+		"Slug", "Project", "Date", "Duration", "Tokens", costHeader, "Tools", sortLabel)
 	b.WriteString(header + "\n")
 	b.WriteString("  " + strings.Repeat("\u2500", 110) + "\n")
+
+	selectedStyle := lipgloss.NewStyle().Background(lipgloss.Color("#2D3748")).Foreground(lipgloss.Color("#FF8C00")).Bold(true)
 
 	// Limit visible rows to available height
 	maxRows := height - 5 // header + separator + padding
@@ -193,7 +198,7 @@ func (v *SessionsView) View(width, height int) string {
 			slug = slug[:17] + "..."
 		}
 
-		project := "/" + strings.ReplaceAll(strings.TrimPrefix(row.ProjectPath, "-"), "-", "/")
+		project := decodePath(row.ProjectPath)
 		if len(project) > 30 {
 			project = "..." + project[len(project)-27:]
 		}
@@ -219,7 +224,11 @@ func (v *SessionsView) View(width, height int) string {
 
 		line := fmt.Sprintf("%s%-20s %-30s %-12s %10s %10s %8s %6d",
 			prefix, slug, project, date, duration, tokens, cost, toolCount)
-		b.WriteString(line + "\n")
+		if i == v.selected {
+			b.WriteString(selectedStyle.Render(line) + "\n")
+		} else {
+			b.WriteString(line + "\n")
+		}
 	}
 
 	return b.String()
