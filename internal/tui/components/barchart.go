@@ -8,7 +8,7 @@ import (
 )
 
 // Bar colors — cyan-focused gradient.
-var barColors = []string{"#00FFFF", "#06B6D4", "#22D3EE", "#67E8F9", "#A5F3FC"}
+var barColors = []string{"#FF8C00", "#FF8C00", "#FED90F", "#FFB347", "#FFD700"}
 
 // BarItem represents a single bar in a bar chart.
 type BarItem struct {

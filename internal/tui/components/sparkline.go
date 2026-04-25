@@ -83,7 +83,7 @@ func BarGraph(data []int, width, height int) string {
 		maxVal = 1
 	}
 
-	barStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#06B6D4"))
+	barStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#FF8C00"))
 	dimStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#6B7280"))
 
 	var b strings.Builder

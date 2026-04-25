@@ -59,7 +59,7 @@ type analysisStyles struct {
 
 func newAnalysisStyles() analysisStyles {
 	return analysisStyles{
-		subtitle: lipgloss.NewStyle().Foreground(lipgloss.Color("#06B6D4")),
+		subtitle: lipgloss.NewStyle().Foreground(lipgloss.Color("#FF8C00")),
 		label:    lipgloss.NewStyle().Foreground(lipgloss.Color("#9CA3AF")),
 		value:    lipgloss.NewStyle().Foreground(lipgloss.Color("#F9FAFB")).Bold(true),
 		accent:   lipgloss.NewStyle().Foreground(lipgloss.Color("#F59E0B")).Bold(true),
