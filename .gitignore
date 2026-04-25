@@ -1,0 +1,5 @@
+cicada
+*.exe
+dist/
+.DS_Store
+simpsons
