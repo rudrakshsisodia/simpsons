@@ -14,11 +14,12 @@ import (
 
 // SessionsView shows a sortable list of all sessions.
 type SessionsView struct {
-	store    *store.Store
-	selected int
-	rows     []*model.SessionMeta // cached sorted list
-	filter   *components.Filter
-	lastKey  string               // track last key for gg detection
+	store      *store.Store
+	selected   int
+	rows       []*model.SessionMeta // cached sorted list
+	filter     *components.Filter
+	lastKey    string // track last key for gg detection
+	sortByCost bool   // when true, sort by cost descending instead of date
 }
 
 // NewSessionsView creates a new SessionsView.
@@ -41,9 +42,15 @@ func (v *SessionsView) refreshRows() {
 			}
 		}
 	}
-	sort.Slice(v.rows, func(i, j int) bool {
-		return v.rows[i].StartTime.After(v.rows[j].StartTime)
-	})
+	if v.sortByCost {
+		sort.Slice(v.rows, func(i, j int) bool {
+			return v.rows[i].CostUSD > v.rows[j].CostUSD
+		})
+	} else {
+		sort.Slice(v.rows, func(i, j int) bool {
+			return v.rows[i].StartTime.After(v.rows[j].StartTime)
+		})
+	}
 }
 
 // Update handles key events for arrow navigation and filter.
@@ -87,6 +94,9 @@ func (v *SessionsView) Update(msg tea.KeyMsg) {
 			if maxIdx >= 0 {
 				v.selected = maxIdx
 			}
+		case "c":
+			v.sortByCost = !v.sortByCost
+			v.selected = 0
 		}
 	}
 	v.lastKey = ""
@@ -138,10 +148,14 @@ func (v *SessionsView) View(width, height int) string {
 	}
 
 	// Header
-	header := fmt.Sprintf("  %-20s %-30s %-12s %10s %10s %8s %6s",
-		"Slug", "Project", "Date", "Duration", "Tokens", "Cost", "Tools")
+	sortLabel := "c:sort by cost"
+	if v.sortByCost {
+		sortLabel = "c:sort by date  [sorted by cost]"
+	}
+	header := fmt.Sprintf("  %-20s %-30s %-12s %10s %10s %8s %6s   %s",
+		"Slug", "Project", "Date", "Duration", "Tokens", "Cost", "Tools", sortLabel)
 	b.WriteString(header + "\n")
-	b.WriteString("  " + strings.Repeat("\u2500", 100) + "\n")
+	b.WriteString("  " + strings.Repeat("\u2500", 110) + "\n")
 
 	// Limit visible rows to available height
 	maxRows := height - 5 // header + separator + padding

@@ -679,15 +679,32 @@ func (a App) renderContent() string {
 	}
 }
 
+// todaySpend returns the total estimated cost for sessions started today.
+func (a App) todaySpend() float64 {
+	today := time.Now().Format("2006-01-02")
+	var total float64
+	for _, s := range a.store.AllSessions() {
+		if s.StartTime.Format("2006-01-02") == today {
+			total += s.CostUSD
+		}
+	}
+	return total
+}
+
 func (a App) renderStatusBar() string {
 	var status string
 	if a.notification != "" {
 		status = a.notification
 	} else if a.scanDone {
+		spend := a.todaySpend()
+		spendStr := ""
+		if spend > 0 {
+			spendStr = fmt.Sprintf("  Today: %s", model.FormatCost(spend))
+		}
 		if a.historyCount > 0 {
-			status = fmt.Sprintf("Ready — %d sessions, %d prompts indexed", a.scanScanned, a.historyCount)
+			status = fmt.Sprintf("Ready — %d sessions, %d prompts indexed%s", a.scanScanned, a.historyCount, spendStr)
 		} else {
-			status = fmt.Sprintf("Ready — %d sessions indexed", a.scanScanned)
+			status = fmt.Sprintf("Ready — %d sessions indexed%s", a.scanScanned, spendStr)
 		}
 	} else if a.scanTotal > 0 {
 		status = fmt.Sprintf("Scanning... %d/%d sessions", a.scanScanned, a.scanTotal)
