@@ -14,5 +14,6 @@ type Analytics struct {
 	WorkModeExplore  int            // Read, Grep, Glob, WebFetch, WebSearch calls
 	WorkModeBuild    int            // Write, Edit calls
 	WorkModeTest     int            // Bash, Agent, Task calls
-	TotalCostUSD     float64        // estimated total cost across all sessions
+	TotalCostUSD     float64            // estimated total cost across all sessions
+	CostByDate       map[string]float64 // "2026-04-25" → cost USD
 }

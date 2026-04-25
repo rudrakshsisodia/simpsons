@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/rudrakshsisodia/simpsons/internal/model"
 	"github.com/rudrakshsisodia/simpsons/internal/store"
 	"github.com/rudrakshsisodia/simpsons/internal/tui/components"
 )
@@ -16,6 +17,7 @@ type ProjectRow struct {
 	Path         string
 	SessionCount int
 	LastActive   string
+	CostUSD      float64
 }
 
 // ProjectsView shows a list of projects.
@@ -114,6 +116,7 @@ func (v *ProjectsView) View(width, height int) string {
 
 		sessions := v.store.SessionsByProject(p)
 		lastActive := ""
+		var totalCost float64
 		for _, s := range sessions {
 			if !s.StartTime.IsZero() {
 				ts := s.StartTime.Format("2006-01-02 15:04")
@@ -121,6 +124,7 @@ func (v *ProjectsView) View(width, height int) string {
 					lastActive = ts
 				}
 			}
+			totalCost += s.CostUSD
 		}
 
 		rows = append(rows, ProjectRow{
@@ -128,6 +132,7 @@ func (v *ProjectsView) View(width, height int) string {
 			Path:         p,
 			SessionCount: len(sessions),
 			LastActive:   lastActive,
+			CostUSD:      totalCost,
 		})
 	}
 
@@ -150,9 +155,9 @@ func (v *ProjectsView) View(width, height int) string {
 		b.WriteString("  " + filterView + "\n")
 	}
 
-	header := fmt.Sprintf("  %-50s %10s %20s", "Project", "Sessions", "Last Active")
+	header := fmt.Sprintf("  %-50s %10s %10s %20s", "Project", "Sessions", "Cost", "Last Active")
 	b.WriteString(header + "\n")
-	b.WriteString("  " + strings.Repeat("\u2500", 82) + "\n")
+	b.WriteString("  " + strings.Repeat("\u2500", 94) + "\n")
 
 	// Calculate scrolling window
 	maxRows := height - 5 // header + separator + padding
@@ -188,7 +193,7 @@ func (v *ProjectsView) View(width, height int) string {
 		if i == v.selected {
 			prefix = "> "
 		}
-		line := fmt.Sprintf("%s%-50s %10d %20s", prefix, name, row.SessionCount, row.LastActive)
+		line := fmt.Sprintf("%s%-50s %10d %10s %20s", prefix, name, row.SessionCount, model.FormatCost(row.CostUSD), row.LastActive)
 		b.WriteString(line + "\n")
 	}
 

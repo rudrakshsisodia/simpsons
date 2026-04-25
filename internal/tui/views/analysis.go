@@ -340,6 +340,26 @@ func renderRightColumnContent(analytics *model.Analytics, activityByDate map[str
 		b.WriteString("\n")
 	}
 
+	// Cost trend bar graph
+	if len(analytics.CostByDate) > 0 {
+		b.WriteString("  " + s.subtitle.Render("Cost (last 30 days)") + "\n")
+		costData := buildCostSparkData(analytics.CostByDate, 30)
+		graphWidth := width - 6
+		if graphWidth < 30 {
+			graphWidth = 30
+		}
+		graph := components.BarGraph(costData, graphWidth, 4)
+		for _, line := range strings.Split(graph, "\n") {
+			b.WriteString("  " + line + "\n")
+		}
+		thisWeekCost, lastWeekCost := weekCosts(analytics.CostByDate)
+		fmt.Fprintf(&b, "  %s %s    %s %s\n",
+			s.label.Render("This week:"), s.accent.Render(model.FormatCost(thisWeekCost)),
+			s.label.Render("Last week:"), s.value.Render(model.FormatCost(lastWeekCost)),
+		)
+		b.WriteString("\n")
+	}
+
 	// Heatmap
 	b.WriteString("  " + s.subtitle.Render("Activity Heatmap (day × hour)") + "\n")
 	heatmapStr := components.Heatmap(heatmap)
@@ -400,6 +420,27 @@ func repeatStr(s string, n int) []string {
 		out[i] = s
 	}
 	return out
+}
+
+// buildCostSparkData returns daily cost (scaled to int cents) for the last n days.
+func buildCostSparkData(costByDate map[string]float64, days int) []int {
+	now := time.Now()
+	data := make([]int, days)
+	for i := range days {
+		date := now.AddDate(0, 0, -(days-1-i)).Format("2006-01-02")
+		data[i] = int(costByDate[date] * 100) // cents for int bar graph
+	}
+	return data
+}
+
+// weekCosts returns total cost for the current week and the previous week.
+func weekCosts(costByDate map[string]float64) (thisWeek, lastWeek float64) {
+	now := time.Now()
+	for i := range 7 {
+		thisWeek += costByDate[now.AddDate(0, 0, -i).Format("2006-01-02")]
+		lastWeek += costByDate[now.AddDate(0, 0, -(7+i)).Format("2006-01-02")]
+	}
+	return
 }
 
 // buildHeatmapFromSessions computes a [7][24]int matrix from session start times.

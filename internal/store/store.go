@@ -90,9 +90,10 @@ func (s *Store) Analytics() *model.Analytics {
 	defer s.mu.RUnlock()
 
 	a := &model.Analytics{
-		ModelsUsed:   make(map[string]int),
-		ToolsUsed:    make(map[string]int),
+		ModelsUsed:     make(map[string]int),
+		ToolsUsed:      make(map[string]int),
 		SessionsByDate: make(map[string]int),
+		CostByDate:     make(map[string]float64),
 	}
 
 	projectSet := make(map[string]bool)
@@ -126,6 +127,7 @@ func (s *Store) Analytics() *model.Analytics {
 		if !meta.StartTime.IsZero() {
 			date := meta.StartTime.Format("2006-01-02")
 			a.SessionsByDate[date]++
+			a.CostByDate[date] += meta.CostUSD
 		}
 	}
 

@@ -14,99 +14,69 @@
 
 ---
 
-**simpsons** is a terminal dashboard that turns your [Claude Code](https://docs.anthropic.com/en/docs/claude-code) session history into something you can actually look at. Tool calls, costs, streaks, project breakdowns — pulled straight from `~/.claude/` and rendered in your terminal. No accounts. No telemetry. No cloud. Just you and your data.
+A terminal dashboard that reads your `~/.claude/` folder and shows you everything about your Claude Code sessions — what you spent, what tools ran, which projects ate your budget, and how productive you've been. Offline only. Nothing leaves your machine.
 
-## Get it
+## Install
+
+```sh
+brew tap rudrakshsisodia/tap
+brew install simpsons
+```
+
+Or with Go:
 
 ```sh
 go install github.com/rudrakshsisodia/simpsons@latest
 ```
 
-## Run it
+## Start
 
 ```sh
 simpsons
 ```
 
-That's it. No flags required.
+## Tabs
 
-## Moving around
+Use `Tab` / `Shift+Tab` or `h` / `l` to move between tabs.
 
-simpsons is keyboard-driven. The basics:
+**Analysis** — the big picture. Daily usage bars, an hour-by-hour heatmap, cost trend for the last 30 days, tool call rankings, model breakdown, streaks, and personal bests like longest session and most productive day.
 
-| Key | Action |
-|-----|--------|
-| `↑` / `↓` or `k` / `j` | Move up / down |
-| `←` / `→` or `h` / `l` | Switch tabs or go back |
-| `Enter` | Drill into the selected item |
-| `Esc` | Go back up one level |
-| `/` | Filter the current list |
-| `y` | Copy `claude --resume <id>` to clipboard |
-| `?` | Show all keybindings |
+**Projects** — every repo you've used Claude in, sorted by last active. Shows session count, total estimated cost, and when you were last in it. Press `Enter` to drill into a project.
 
-## Sharing sessions
+**Sessions** — every conversation, sorted newest first. Shows project, duration, token count, estimated cost, and tool call count. Press `Enter` for the full breakdown: transcript, timeline, file activity, subagent spawns, and per-session tool stats.
 
-You can export and import sessions as zips — useful for moving sessions between machines or handing them off to a teammate.
+**Agents** — subagent usage rolled up across all sessions.
+
+**Tools** — ranked tool call counts across everything, split by built-in and MCP server tools.
+
+## Controls
 
 | Key | What it does |
 |-----|-------------|
-| `e` | Export the currently selected session |
-| `E` | Export everything that's currently visible (filter-aware) |
-| `i` | Import one or more sessions from a zip |
+| `j` / `↓` | Move down |
+| `k` / `↑` | Move up |
+| `h` / `←` | Go back / previous tab |
+| `l` / `→` | Drill in / next tab |
+| `Enter` | Open selected item |
+| `Esc` | Back up one level |
+| `/` | Filter current list |
+| `y` | Copy `claude --resume <id>` to clipboard |
+| `?` | Show all shortcuts |
 
-Zips land in whatever directory you launched simpsons from. Each zip contains the raw JSONL file and a small manifest. Imported sessions are fully compatible with Claude Code — you can browse them in simpsons and pick up right where you left off with `claude --resume`.
+## Sessions — export and import
 
-## What's inside
+Pack any session into a zip and share it, archive it, or open it on another machine.
 
-```
-simpsons
-│
-├── Analysis              ← The big picture
-│   ├── Activity heatmap  (GitHub contribution graph, but for AI)
-│   ├── Daily session sparkline
-│   ├── Per-session message and tool bar charts
-│   ├── Streaks           (current, longest, weekly)
-│   ├── Personal bests    (longest session, most messages, most tools used)
-│   └── Trends            (this week vs. last, average session length)
-│
-├── Projects              ← Per-repo breakdown
-│   ├── All projects, sorted by last active
-│   └── Project detail
-│       ├── Overview      total sessions, messages, time spent
-│       ├── Sessions      every session in this project
-│       ├── Tools         which tools got called and how often
-│       ├── Activity      project-scoped heatmap
-│       └── Skills        which Claude Code skills were invoked
-│
-├── Sessions              ← Every conversation
-│   ├── Session list      project, duration, message count, cost
-│   ├── Export / import   (e / E / i)
-│   └── Session detail
-│       ├── Chat          full transcript — your prompts and Claude's replies
-│       ├── Overview      duration, messages, model, cost
-│       ├── Timeline      every tool call and message in order
-│       ├── Files         what was read, written, and edited
-│       ├── Agents        subagent spawns and their outcomes
-│       └── Tools         per-session tool call breakdown
-│
-├── Agents                ← Subagent usage across all sessions
-│
-└── Tools                 ← What Claude actually reached for
-    ├── Built-in tools ranked by total call count
-    └── MCP tools grouped by server
-```
+| Key | Action |
+|-----|--------|
+| `e` | Zip the selected session |
+| `E` | Zip everything currently visible |
+| `i` | Import from a zip |
 
-## Features at a glance
+Zips contain the raw JSONL transcript plus a manifest. They're compatible with `claude --resume` so whoever receives one can pick up right where it left off.
 
-- Session history browser with full transcript replay
-- Project-level analytics (sessions, messages, duration, tools, skills)
-- Cost tracking — see exactly what each session spent
-- Tool usage rankings across all sessions and per-project
-- Subagent visibility — see when Claude spawned agents and what they did
-- Activity heatmap, streaks, and personal bests
-- Session export/import for sharing or backup
-- Runs entirely offline against local `~/.claude/` data
+## Cost tracking
 
-## License
+Every session shows an estimated cost based on the model and token counts from the transcript. Totals roll up per project and across everything. The Analysis tab shows a daily cost graph for the last 30 days with this-week vs last-week comparison.
 
-[MIT](LICENSE)
+Prices are hardcoded against Anthropic's published rates and updated manually when they change.
