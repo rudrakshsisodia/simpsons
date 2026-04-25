@@ -339,6 +339,11 @@ func (a App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					a.toolsView.Update(msg)
 				}
 				return a, nil
+			case "c":
+				if a.activeTab == 2 && !a.sessionsView.FilterActive() {
+					a.sessionsView.Update(msg)
+				}
+				return a, nil
 			default:
 				// Forward any other runes to views with active filters
 				if a.activeTab == 1 && a.projectsView.FilterActive() {
